@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Answer
 {
@@ -26,7 +27,24 @@ namespace Answer
          */
         public IList<int> TopKFrequent(int[] nums, int k)
         {
-            throw new NotImplementedException();
+            var frequencyMap = new Dictionary<int, int>();
+            foreach (int num in nums)
+            {
+                if (frequencyMap.ContainsKey(num))
+                {
+                    frequencyMap[num]++;
+                }
+                else
+                {
+                    frequencyMap[num] = 1;
+                }
+            }
+
+            return frequencyMap
+                .OrderByDescending(kvp => kvp.Value)
+                .Take(k)
+                .Select(kvp => kvp.Key)
+                .ToList();
         }
     }
 }

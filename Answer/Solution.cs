@@ -24,33 +24,38 @@ namespace Answer
         Your algorithm's time complexity must be better
         than O(n log n), where n is the array's size.
          */
-        public IList<int> TopKFrequent(int[] nums, int k)
+        public IList<int> TopKFrequent(int[] nums, int k) =>
+            TopKFrequent(CalculateFrequency(nums), k);
+
+        public IEnumerable<(int value, int frequency)> CalculateFrequency(IEnumerable<int> nums)
         {
-            Dictionary<int, Item> map = new Dictionary<int, Item>();
+            Dictionary<int, int> map = new Dictionary<int, int>();
             foreach (int num in nums)
             {
-                if (map.TryGetValue(num, out Item item))
-                {
-                    item.Frequency++;
-                }
-                else
-                {
-                    map[num] = new Item(num);
-                }
+                map.TryGetValue(num, out int frequency);
+                map[num] = ++frequency;
             }
-
-            return TopKFrequent(map.Values, k);
+            return map.Select(kvp => (value: kvp.Key, frequency: kvp.Value));
         }
 
-        private IList<int> TopKFrequent(IEnumerable<Item> items, int k)
+        private IList<int> TopKFrequent(IEnumerable<(int value, int frequency)> items, int k)
         {
-            List<Item> minHeap = new List<Item>();
+            List<(int value, int frequency)> minHeap = new List<(int value, int frequency)>();
 
-            void AddToMinHeap(Item item)
+            foreach (var item in items)
+            {
+                AddToMinHeap(item);
+            }
+            return minHeap.Select(item => item.value).ToList();
+
+            int? GetParentIndex(int index) =>
+                (index == 0) ? (int?)null : (index - 1) / 2;
+
+            void AddToMinHeap((int value, int frequency) item)
             {
                 if (minHeap.Count == k)
                 {
-                    if (item.Frequency > minHeap[0].Frequency)
+                    if (item.frequency > minHeap[0].frequency)
                     {
                         AddToStartAndBubbleDown(item);
                     }
@@ -61,7 +66,7 @@ namespace Answer
                 }
             }
 
-            void AddToStartAndBubbleDown(Item item)
+            void AddToStartAndBubbleDown((int value, int frequency) item)
             {
                 var index = 0;
                 minHeap[index] = item;
@@ -69,15 +74,15 @@ namespace Answer
                 var childIndexA = (index * 2) + 1;
                 var childIndexB = (index * 2) + 2;
 
-                var childItemA = childIndexA < minHeap.Count ? minHeap[childIndexA] : null;
-                var childItemB = childIndexB < minHeap.Count ? minHeap[childIndexB] : null;
+                var childItemA = childIndexA < minHeap.Count ? minHeap[childIndexA] : default;
+                var childItemB = childIndexB < minHeap.Count ? minHeap[childIndexB] : default;
 
-                while (childItemA != null && childItemA.Frequency < item.Frequency ||
-                    childItemB != null && childItemB.Frequency < item.Frequency)
+                while (childItemA != default && childItemA.frequency < item.frequency ||
+                    childItemB != default && childItemB.frequency < item.frequency)
                 {
-                    bool swapWithA = childItemB == null || childItemA.Frequency < childItemB.Frequency;
+                    bool swapWithA = childItemB == default || childItemA.frequency < childItemB.frequency;
                     int indexToSwap = swapWithA ? childIndexA : childIndexB;
-                    Item itemToSwap = swapWithA ? childItemA : childItemB;
+                    var itemToSwap = swapWithA ? childItemA : childItemB;
 
                     minHeap[index] = itemToSwap;
                     minHeap[indexToSwap] = item;
@@ -86,12 +91,12 @@ namespace Answer
 
                     childIndexA = (index * 2) + 1;
                     childIndexB = (index * 2) + 2;
-                    childItemA = childIndexA < minHeap.Count ? minHeap[childIndexA] : null;
-                    childItemB = childIndexB < minHeap.Count ? minHeap[childIndexB] : null;
+                    childItemA = childIndexA < minHeap.Count ? minHeap[childIndexA] : default;
+                    childItemB = childIndexB < minHeap.Count ? minHeap[childIndexB] : default;
                 }
             }
 
-            void AddToEndAndBubbleUp(Item item)
+            void AddToEndAndBubbleUp((int value, int frequency) item)
             {
                 var index = minHeap.Count;
                 minHeap.Add(item);
@@ -99,7 +104,7 @@ namespace Answer
                 while (parentIndex.HasValue)
                 {
                     var parentItem = minHeap[parentIndex.Value];
-                    if (parentItem.Frequency <= item.Frequency)
+                    if (parentItem.frequency <= item.frequency)
                     {
                         break;
                     }
@@ -112,27 +117,6 @@ namespace Answer
                     }
                 }
             }
-
-            int? GetParentIndex(int index) =>
-                (index == 0) ? (int?)null : (index - 1) / 2;
-
-            foreach (Item item in items)
-            {
-                AddToMinHeap(item);
-            }
-            return minHeap.Select(item => item.Value).ToList();
-
-        }
-
-        private class Item
-        {
-            public Item(int value)
-            {
-                Value = value;
-                Frequency = 1;
-            }
-            public int Value { get; }
-            public int Frequency { get; set; }
         }
     }
 }
